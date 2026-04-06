@@ -20,7 +20,7 @@ export default function FilterPanel({ filters, onChange, stats, adminView, onAdm
         <p className="label-mono px-3.5 py-2.5 border-b border-[rgba(14,165,233,0.15)] text-teal-bright">
           Filter Datasets
         </p>
-        <div className="p-3.5 flex flex-col gap-3">
+        <div className="p-3 flex flex-col gap-3">
           <Select label="Country node" value={filters.country} onChange={(v) => set("country", v)}
             options={[
               { value: "all", label: "All nodes" },

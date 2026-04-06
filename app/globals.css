@@ -108,6 +108,17 @@ html, body {
 }
 .leaflet-control-attribution a { color: #0891b2 !important; }
 
+/* Draggable zoom control host */
+.leaflet-zoom-draggable {
+  position: absolute;
+  z-index: 900; /* above tiles, below app overlays */
+  top: 70px;
+  right: 12px;
+  cursor: grab;
+  touch-action: none;
+}
+.leaflet-zoom-draggable:active { cursor: grabbing; }
+
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar          { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track    { background: #0a1628; }

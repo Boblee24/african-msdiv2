@@ -35,6 +35,7 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
   const leafletRef     = useRef<import("leaflet").Map | null>(null);
   // Prevents double-init from React StrictMode running effects twice
   const initializedRef = useRef(false);
+  const zoomHostRef    = useRef<HTMLDivElement | null>(null);
 
   // ── Initial map creation (runs once) ──────────────────────────────────────
   useEffect(() => {
@@ -42,9 +43,16 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
     initializedRef.current = true;
 
     let mounted = true; // guard against async import resolving after unmount
+    let cleanupZoomDrag: (() => void) | null = null;
 
     import("leaflet").then((L) => {
       if (!mounted || !containerRef.current || leafletRef.current) return;
+
+      // Draggable host for zoom control (so it can be moved anywhere).
+      const zoomHost = document.createElement("div");
+      zoomHost.className = "leaflet-zoom-draggable";
+      containerRef.current.appendChild(zoomHost);
+      zoomHostRef.current = zoomHost;
 
       // Patch default icon paths (webpack asset issue)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -64,7 +72,14 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
         maxZoom:          17,
       });
 
-      L.control.zoom({ position: "topright" }).addTo(map);
+      const zoom = L.control.zoom({ position: "topleft" });
+      zoom.addTo(map);
+      const zoomEl = zoom.getContainer();
+      if (zoomEl) {
+        // Detach from Leaflet corner container and mount in our draggable host.
+        zoomHost.appendChild(zoomEl);
+        cleanupZoomDrag = makeDraggable(zoomHost, "african_msdi_zoom_control_pos");
+      }
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | African MSDI',
@@ -77,6 +92,12 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
     return () => {
       mounted = false;
       initializedRef.current = false;
+      cleanupZoomDrag?.();
+      cleanupZoomDrag = null;
+      if (zoomHostRef.current) {
+        zoomHostRef.current.remove();
+        zoomHostRef.current = null;
+      }
       if (leafletRef.current) {
         leafletRef.current.remove();
         leafletRef.current = null;
@@ -140,6 +161,92 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
   }, [datasets, submissions, adminView]);
 
   return <div ref={containerRef} className="w-full h-full" />;
+}
+
+function makeDraggable(el: HTMLDivElement, storageKey: string) {
+  const existing = safeParsePos(localStorage.getItem(storageKey));
+  if (existing) {
+    el.style.left = `${existing.x}px`;
+    el.style.top = `${existing.y}px`;
+  } else {
+    // Default: top-right-ish without overlapping the title card.
+    el.style.left = "unset";
+    el.style.right = "12px";
+    el.style.top = "70px";
+  }
+
+  let dragging = false;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  const onPointerDown = (e: PointerEvent) => {
+    // Only allow drag via right mouse button? No — keep simple: any pointer.
+    dragging = true;
+    el.setPointerCapture(e.pointerId);
+    const rect = el.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+
+    // Convert from right/top to explicit left/top for dragging.
+    el.style.right = "unset";
+    el.style.left = `${startLeft}px`;
+    el.style.top = `${startTop}px`;
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const x = Math.max(0, startLeft + dx);
+    const y = Math.max(0, startTop + dy);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  const onPointerUp = (e: PointerEvent) => {
+    if (!dragging) return;
+    dragging = false;
+    try {
+      const x = Math.round(parseFloat(el.style.left || "0"));
+      const y = Math.round(parseFloat(el.style.top || "0"));
+      localStorage.setItem(storageKey, JSON.stringify({ x, y }));
+    } catch {
+      // ignore
+    }
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  el.addEventListener("pointerdown", onPointerDown, { passive: false });
+  window.addEventListener("pointermove", onPointerMove, { passive: false });
+  window.addEventListener("pointerup", onPointerUp, { passive: false });
+
+  return () => {
+    el.removeEventListener("pointerdown", onPointerDown);
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+  };
+}
+
+function safeParsePos(raw: string | null): { x: number; y: number } | null {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as { x?: unknown; y?: unknown };
+    if (typeof v.x === "number" && typeof v.y === "number" && Number.isFinite(v.x) && Number.isFinite(v.y)) {
+      return { x: v.x, y: v.y };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Popup HTML helpers (plain strings — Tailwind can't reach these) ──────────
