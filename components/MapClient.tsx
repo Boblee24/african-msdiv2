@@ -64,8 +64,8 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
         maxZoom:          17,
       });
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> | African MSDI',
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | African MSDI',
         maxZoom: 19,
       }).addTo(map);
 
@@ -201,3 +201,4 @@ function csbPopup(sub: CsbSubmission): string {
     </div>
   </div>`;
 }
+

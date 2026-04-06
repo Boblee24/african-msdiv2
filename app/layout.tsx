@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Crimson_Pro, DM_Sans, JetBrains_Mono } from "next/font/google";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import Nav from "@/components/Nav";
 
