@@ -34,7 +34,15 @@
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+}
+
+:root {
+  /* Tailwind v4 spacing utilities use calc(var(--spacing) * n). */
+  --spacing: 0.25rem;
+}
+
 
 html, body {
   background-color: var(--color-ocean-deepest);
