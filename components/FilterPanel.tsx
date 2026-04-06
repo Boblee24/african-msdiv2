@@ -1,4 +1,5 @@
 "use client";
+import { MAP_THEME_OPTIONS, type MapThemeId } from "@/lib/mapThemes";
 
 type Filters = { country: string; confidence: string; source: string };
 type Props = {
@@ -7,9 +8,19 @@ type Props = {
   stats: { nigeria: number; kenya: number; sa: number; csb: number };
   adminView: boolean;
   onAdminToggle: () => void;
+  mapTheme: MapThemeId;
+  onMapThemeChange: (theme: MapThemeId) => void;
 };
 
-export default function FilterPanel({ filters, onChange, stats, adminView, onAdminToggle }: Props) {
+export default function FilterPanel({
+  filters,
+  onChange,
+  stats,
+  adminView,
+  onAdminToggle,
+  mapTheme,
+  onMapThemeChange,
+}: Props) {
   const set = (k: keyof Filters, v: string) => onChange({ ...filters, [k]: v });
 
   return (
@@ -21,6 +32,9 @@ export default function FilterPanel({ filters, onChange, stats, adminView, onAdm
           Filter Datasets
         </p>
         <div className="p-3 flex flex-col gap-3">
+          <Select label="Map theme" value={mapTheme} onChange={(v) => onMapThemeChange(v as MapThemeId)}
+            options={MAP_THEME_OPTIONS}
+          />
           <Select label="Country node" value={filters.country} onChange={(v) => set("country", v)}
             options={[
               { value: "all", label: "All nodes" },

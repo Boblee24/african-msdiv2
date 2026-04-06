@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import type { DataPoint, CsbSubmission } from "@/lib/db";
+import { MAP_THEMES, type MapThemeId } from "@/lib/mapThemes";
 
 type MapProps = {
   datasets: DataPoint[];
   submissions: CsbSubmission[];
   onPointClick: (data: { type: "dataset" | "csb"; item: DataPoint | CsbSubmission }) => void;
   adminView: boolean;
+  mapTheme: MapThemeId;
 };
 
 const NODE_COLOURS: Record<string, string> = {
@@ -30,9 +32,10 @@ function svgMarker(color: string, size: number, ring: boolean): string {
   </svg>`;
 }
 
-export default function MapClient({ datasets, submissions, onPointClick, adminView }: MapProps) {
+export default function MapClient({ datasets, submissions, onPointClick, adminView, mapTheme }: MapProps) {
   const containerRef   = useRef<HTMLDivElement>(null);
   const leafletRef     = useRef<import("leaflet").Map | null>(null);
+  const tileLayerRef   = useRef<import("leaflet").TileLayer | null>(null);
   // Prevents double-init from React StrictMode running effects twice
   const initializedRef = useRef(false);
   const zoomHostRef    = useRef<HTMLDivElement | null>(null);
@@ -81,10 +84,7 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
         cleanupZoomDrag = makeDraggable(zoomHost, "african_msdi_zoom_control_pos");
       }
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | African MSDI',
-        maxZoom: 19,
-      }).addTo(map);
+      setBaseLayer(L, map, mapTheme, tileLayerRef, containerRef);
 
       leafletRef.current = map;
     });
@@ -102,8 +102,19 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
         leafletRef.current.remove();
         leafletRef.current = null;
       }
+      tileLayerRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const map = leafletRef.current;
+    if (!map) return;
+
+    import("leaflet").then((L) => {
+      if (!leafletRef.current) return;
+      setBaseLayer(L, map, mapTheme, tileLayerRef, containerRef);
+    });
+  }, [mapTheme]);
 
   // ── Re-render markers whenever data or view mode changes ──────────────────
   useEffect(() => {
@@ -161,6 +172,30 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
   }, [datasets, submissions, adminView]);
 
   return <div ref={containerRef} className="w-full h-full" />;
+}
+
+function setBaseLayer(
+  L: typeof import("leaflet"),
+  map: import("leaflet").Map,
+  themeId: MapThemeId,
+  tileLayerRef: { current: import("leaflet").TileLayer | null },
+  containerRef: { current: HTMLDivElement | null },
+) {
+  const theme = MAP_THEMES[themeId] ?? MAP_THEMES.voyager;
+
+  if (tileLayerRef.current) {
+    map.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = null;
+  }
+
+  const layer = L.tileLayer(theme.url, {
+    attribution: `${theme.attribution} | African MSDI`,
+    maxZoom: theme.maxZoom ?? 19,
+  });
+
+  layer.addTo(map);
+  tileLayerRef.current = layer;
+  containerRef.current?.style.setProperty("--map-bg", theme.background);
 }
 
 function makeDraggable(el: HTMLDivElement, storageKey: string) {
@@ -310,4 +345,3 @@ function csbPopup(sub: CsbSubmission): string {
     </div>
   </div>`;
 }
-

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import FilterPanel from "@/components/FilterPanel";
 import ApiPanel    from "@/components/ApiPanel";
 import type { DataPoint, CsbSubmission } from "@/lib/db";
+import { useMapTheme } from "@/hooks/useMapTheme";
 
 const MapClient = dynamic(() => import("@/components/MapClient"), {
   ssr: false,
@@ -21,6 +22,7 @@ type Filters  = { country: string; confidence: string; source: string };
 type Selected = { type: "dataset" | "csb"; item: DataPoint | CsbSubmission } | null;
 
 export default function DiscoveryPortal() {
+  const { mapTheme, setMapTheme } = useMapTheme();
   const [all,       setAll]       = useState<DataPoint[]>([]);
   const [subs,      setSubs]      = useState<CsbSubmission[]>([]);
   const [filtered,  setFiltered]  = useState<DataPoint[]>([]);
@@ -70,6 +72,7 @@ export default function DiscoveryPortal() {
         submissions={subs}
         onPointClick={handleClick}
         adminView={adminView}
+        mapTheme={mapTheme}
       />
 
       {/* Filter + legend + toggle */}
@@ -79,6 +82,8 @@ export default function DiscoveryPortal() {
         stats={stats}
         adminView={adminView}
         onAdminToggle={() => setAdminView((v) => !v)}
+        mapTheme={mapTheme}
+        onMapThemeChange={setMapTheme}
       />
 
       {/* Centre title card */}
