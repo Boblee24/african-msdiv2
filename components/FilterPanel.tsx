@@ -26,20 +26,17 @@ export default function FilterPanel({
   onMapThemeChange,
 }: Props) {
   const set = (k: keyof Filters, v: string) => onChange({ ...filters, [k]: v });
-  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
-    filters: true,
-    legend: false,
-    mode: false,
-    stats: false,
-  });
-
-  const toggle = (key: SectionKey) => setOpen((s) => ({ ...s, [key]: !s[key] }));
+  const [openSection, setOpenSection] = useState<SectionKey | null>("filters");
+  const isOpen = (key: SectionKey) => openSection === key;
+  const toggle = (key: SectionKey) => {
+    setOpenSection((current) => (current === key ? null : key));
+  };
 
   return (
     <div className="absolute top-3 left-3 z-[500] w-56 flex flex-col gap-2">
       <Accordion
         title="Filter Datasets"
-        open={open.filters}
+        open={isOpen("filters")}
         onToggle={() => toggle("filters")}
         accent
       >
@@ -73,7 +70,7 @@ export default function FilterPanel({
 
       <Accordion
         title="Legend"
-        open={open.legend}
+        open={isOpen("legend")}
         onToggle={() => toggle("legend")}
       >
         <div className="p-3.5 flex flex-col gap-1.5">
@@ -88,7 +85,7 @@ export default function FilterPanel({
 
       <Accordion
         title={adminView ? "Navy / Military" : "Public / Commercial"}
-        open={open.mode}
+        open={isOpen("mode")}
         onToggle={() => toggle("mode")}
         shellClassName="rounded-xl transition-all duration-300 backdrop-blur-md overflow-hidden"
         shellStyle={{
@@ -116,7 +113,7 @@ export default function FilterPanel({
 
       <Accordion
         title="Stats"
-        open={open.stats}
+        open={isOpen("stats")}
         onToggle={() => toggle("stats")}
       >
         <div className="p-3">
@@ -221,4 +218,3 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
     </div>
   );
 }
-
