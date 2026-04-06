@@ -1,4 +1,6 @@
 "use client";
+
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { MAP_THEME_OPTIONS, type MapThemeId } from "@/lib/mapThemes";
 
 type Filters = { country: string; confidence: string; source: string };
@@ -12,6 +14,8 @@ type Props = {
   onMapThemeChange: (theme: MapThemeId) => void;
 };
 
+type SectionKey = "filters" | "legend" | "mode" | "stats";
+
 export default function FilterPanel({
   filters,
   onChange,
@@ -22,15 +26,23 @@ export default function FilterPanel({
   onMapThemeChange,
 }: Props) {
   const set = (k: keyof Filters, v: string) => onChange({ ...filters, [k]: v });
+  const [open, setOpen] = useState<Record<SectionKey, boolean>>({
+    filters: true,
+    legend: false,
+    mode: false,
+    stats: false,
+  });
+
+  const toggle = (key: SectionKey) => setOpen((s) => ({ ...s, [key]: !s[key] }));
 
   return (
     <div className="absolute top-3 left-3 z-[500] w-56 flex flex-col gap-2">
-
-      {/* Filter box */}
-      <div className="glass-dark overflow-hidden">
-        <p className="label-mono px-3.5 py-2.5 border-b border-[rgba(14,165,233,0.15)] text-teal-bright">
-          Filter Datasets
-        </p>
+      <Accordion
+        title="Filter Datasets"
+        open={open.filters}
+        onToggle={() => toggle("filters")}
+        accent
+      >
         <div className="p-3 flex flex-col gap-3">
           <Select label="Map theme" value={mapTheme} onChange={(v) => onMapThemeChange(v as MapThemeId)}
             options={MAP_THEME_OPTIONS}
@@ -38,81 +50,117 @@ export default function FilterPanel({
           <Select label="Country node" value={filters.country} onChange={(v) => set("country", v)}
             options={[
               { value: "all", label: "All nodes" },
-              { value: "NG",  label: "🇳🇬 Nigeria (NHA)" },
-              { value: "KE",  label: "🇰🇪 Kenya (KMA)" },
-              { value: "ZA",  label: "🇿🇦 South Africa (SANHO)" },
+              { value: "NG", label: "Nigeria (NHA)" },
+              { value: "KE", label: "Kenya (KMA)" },
+              { value: "ZA", label: "South Africa (SANHO)" },
             ]}
           />
           <Select label="Confidence" value={filters.confidence} onChange={(v) => set("confidence", v)}
             options={[
-              { value: "all",  label: "All levels" },
+              { value: "all", label: "All levels" },
               { value: "high", label: "High (official)" },
             ]}
           />
           <Select label="Data source" value={filters.source} onChange={(v) => set("source", v)}
             options={[
-              { value: "all",             label: "All sources" },
+              { value: "all", label: "All sources" },
               { value: "official_survey", label: "Official survey" },
               { value: "crowdsourced_bathymetry", label: "VOO Edge-Node" },
             ]}
           />
         </div>
-      </div>
+      </Accordion>
 
-      {/* Legend */}
-      <div className="glass-dark p-3.5">
-        <p className="label-mono mb-2.5">Legend</p>
-        <div className="flex flex-col gap-1.5">
-          <LegendDot color="#22c55e" label="Nigeria / NHA"        count={stats.nigeria} />
-          <LegendDot color="#60a5fa" label="Kenya / KMA"          count={stats.kenya}   />
-          <LegendDot color="#f87171" label="South Africa / SANHO" count={stats.sa}      />
+      <Accordion
+        title="Legend"
+        open={open.legend}
+        onToggle={() => toggle("legend")}
+      >
+        <div className="p-3.5 flex flex-col gap-1.5">
+          <LegendDot color="#22c55e" label="Nigeria / NHA" count={stats.nigeria} />
+          <LegendDot color="#60a5fa" label="Kenya / KMA" count={stats.kenya} />
+          <LegendDot color="#f87171" label="South Africa / SANHO" count={stats.sa} />
           <div className="h-px bg-[rgba(14,165,233,0.15)] my-1" />
-          <LegendDot color="#fb923c" label="VOO — Validated" count={stats.csb} small />
-          <LegendDot color="#94a3b8" label="VOO — Flagged"   count={null}      small />
+          <LegendDot color="#fb923c" label="VOO - Validated" count={stats.csb} small />
+          <LegendDot color="#94a3b8" label="VOO - Flagged" count={null} small />
         </div>
-      </div>
+      </Accordion>
 
-      {/* Military / Public decimation toggle */}
-      <div
-        className="rounded-xl p-3.5 transition-all duration-300 backdrop-blur-md"
-        style={{
+      <Accordion
+        title={adminView ? "Navy / Military" : "Public / Commercial"}
+        open={open.mode}
+        onToggle={() => toggle("mode")}
+        shellClassName="rounded-xl transition-all duration-300 backdrop-blur-md overflow-hidden"
+        shellStyle={{
           background: adminView ? "rgba(239,68,68,0.07)" : "rgba(6,13,26,0.93)",
           border: `1px solid ${adminView ? "rgba(239,68,68,0.5)" : "rgba(14,165,233,0.18)"}`,
         }}
+        headerRight={<Toggle checked={adminView} onChange={onAdminToggle} danger={adminView} />}
       >
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm">{adminView ? "🪖" : "🌐"}</span>
-            <span className={`font-mono text-[10px] font-semibold tracking-[0.07em] ${adminView ? "text-node-sa" : "text-text-muted"}`}>
-              {adminView ? "NAVY / MILITARY" : "PUBLIC / COMMERCIAL"}
-            </span>
-          </div>
-          <Toggle checked={adminView} onChange={onAdminToggle} danger={adminView} />
+        <div className="px-3.5 pb-3.5">
+          <p className={`text-[11px] leading-relaxed border-t pt-2 ${adminView ? "text-[#fca5a5]" : "text-text-muted"}`}
+            style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+            {adminView
+              ? <><strong className="text-node-sa">High-res:</strong> precise 3 d.p. - dense clusters - full depth</>
+              : <><strong className="text-text-secondary">Decimated:</strong> rounded 1 d.p. - sparse - safety layer only</>}
+          </p>
+
+          {adminView && (
+            <div className="mt-2 px-2 py-0.5 rounded font-mono text-[10px] text-node-sa tracking-[0.05em]"
+              style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)" }}>
+              RESTRICTED - NHO AUTH REQUIRED
+            </div>
+          )}
         </div>
+      </Accordion>
 
-        <p className={`text-[11px] leading-relaxed border-t pt-2 ${adminView ? "text-[#fca5a5]" : "text-text-muted"}`}
-          style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-          {adminView
-            ? <><strong className="text-node-sa">High-res:</strong> precise 3 d.p. · dense clusters · full depth</>
-            : <><strong className="text-text-secondary">Decimated:</strong> rounded 1 d.p. · sparse · safety layer only</>}
-        </p>
-
-        {adminView && (
-          <div className="mt-2 px-2 py-0.5 rounded font-mono text-[10px] text-node-sa tracking-[0.05em]"
-            style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)" }}>
-            ⚠ RESTRICTED · NHO AUTH REQUIRED
+      <Accordion
+        title="Stats"
+        open={open.stats}
+        onToggle={() => toggle("stats")}
+      >
+        <div className="p-3">
+          <div className="flex justify-around">
+            <Stat label="Nodes" value="3" color="text-teal-bright" />
+            <Stat label="Points" value={String(stats.nigeria + stats.kenya + stats.sa)} color="text-text-primary" />
+            <Stat label="VOO" value={String(stats.csb)} color="text-csb-orange" />
           </div>
-        )}
-      </div>
-
-      {/* Stats */}
-      <div className="glass-dark p-3">
-        <div className="flex justify-around">
-          <Stat label="Nodes"  value="3"                                     color="text-teal-bright" />
-          <Stat label="Points" value={String(stats.nigeria + stats.kenya + stats.sa)} color="text-text-primary" />
-          <Stat label="VOO"    value={String(stats.csb)}                     color="text-csb-orange" />
         </div>
+      </Accordion>
+    </div>
+  );
+}
+
+function Accordion({
+  title,
+  open,
+  onToggle,
+  children,
+  headerRight,
+  accent,
+  shellClassName,
+  shellStyle,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+  headerRight?: ReactNode;
+  accent?: boolean;
+  shellClassName?: string;
+  shellStyle?: CSSProperties;
+}) {
+  return (
+    <div className={shellClassName ?? "glass-dark overflow-hidden"} style={shellStyle}>
+      <div className="px-3.5 py-2.5 border-b border-[rgba(14,165,233,0.15)] flex items-center gap-2">
+        <button type="button" onClick={onToggle}
+          className="flex items-center gap-2 flex-1 text-left cursor-pointer">
+          <span className={`label-mono ${accent ? "text-teal-bright" : ""}`}>{title}</span>
+          <span className="text-[10px] text-text-muted">{open ? "-" : "+"}</span>
+        </button>
+        {headerRight}
       </div>
+      {open ? children : null}
     </div>
   );
 }
@@ -151,7 +199,7 @@ function LegendDot({ color, label, count, small }: { color: string; label: strin
 
 function Toggle({ checked, onChange, danger }: { checked: boolean; onChange: () => void; danger?: boolean }) {
   return (
-    <button onClick={onChange} className="relative w-9 h-5 rounded-full border-none cursor-pointer shrink-0 transition-all duration-200"
+    <button type="button" onClick={onChange} className="relative w-9 h-5 rounded-full border-none cursor-pointer shrink-0 transition-all duration-200"
       style={{
         background: checked
           ? danger
@@ -173,3 +221,4 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
     </div>
   );
 }
+
