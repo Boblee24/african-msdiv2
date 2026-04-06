@@ -14,7 +14,7 @@ type Props = {
   onMapThemeChange: (theme: MapThemeId) => void;
 };
 
-type SectionKey = "filters" | "legend" | "mode" | "stats";
+type SectionKey = "legend" | "mode" | "stats";
 
 export default function FilterPanel({
   filters,
@@ -26,7 +26,7 @@ export default function FilterPanel({
   onMapThemeChange,
 }: Props) {
   const set = (k: keyof Filters, v: string) => onChange({ ...filters, [k]: v });
-  const [openSection, setOpenSection] = useState<SectionKey | null>("filters");
+  const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const isOpen = (key: SectionKey) => openSection === key;
   const toggle = (key: SectionKey) => {
     setOpenSection((current) => (current === key ? null : key));
@@ -34,12 +34,10 @@ export default function FilterPanel({
 
   return (
     <div className="absolute top-3 left-3 z-[500] w-56 flex flex-col gap-2">
-      <Accordion
-        title="Filter Datasets"
-        open={isOpen("filters")}
-        onToggle={() => toggle("filters")}
-        accent
-      >
+      <div className="glass-dark overflow-hidden">
+        <div className="px-3.5 py-2.5 border-b border-[rgba(14,165,233,0.15)]">
+          <span className="label-mono text-teal-bright">Filter Datasets</span>
+        </div>
         <div className="p-3 flex flex-col gap-3">
           <Select label="Map theme" value={mapTheme} onChange={(v) => onMapThemeChange(v as MapThemeId)}
             options={MAP_THEME_OPTIONS}
@@ -66,7 +64,7 @@ export default function FilterPanel({
             ]}
           />
         </div>
-      </Accordion>
+      </div>
 
       <Accordion
         title="Legend"
