@@ -33,7 +33,7 @@ export default function FilterPanel({
   };
 
   return (
-    <div className="absolute top-3 left-3 z-[500] w-56 flex flex-col gap-2">
+    <div className="absolute top-3 left-3 z-500 w-56 flex flex-col gap-2">
       <div className="glass-dark overflow-hidden">
         <div className="px-3.5 py-2.5 border-b border-[rgba(14,165,233,0.15)]">
           <span className="label-mono text-teal-bright">Filter Datasets</span>

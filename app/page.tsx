@@ -87,7 +87,7 @@ export default function DiscoveryPortal() {
       />
 
       {/* Centre title card */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[400] text-center pointer-events-none px-5 py-2.5 rounded-xl"
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-400 text-center pointer-events-none px-5 py-2.5 rounded-xl"
         style={{ background: "rgba(6,13,26,0.88)", border: "1px solid rgba(14,165,233,0.35)", backdropFilter: "blur(12px)" }}>
         <p className="font-display text-lg font-bold text-text-primary">
           Federated African Marine Spatial Data Infrastructure
@@ -99,7 +99,7 @@ export default function DiscoveryPortal() {
 
       {/* Bottom hint */}
       {!selected && (
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[400] pointer-events-none px-4 py-1.5 rounded-full text-xs text-text-muted whitespace-nowrap"
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-400 pointer-events-none px-4 py-1.5 rounded-full text-xs text-text-muted whitespace-nowrap"
           style={{ background: "rgba(6,13,26,0.85)", border: "1px solid rgba(14,165,233,0.15)", backdropFilter: "blur(8px)" }}>
           Click any marker to inspect · Use filters to explore nodes
         </div>
