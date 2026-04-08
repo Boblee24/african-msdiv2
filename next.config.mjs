@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  webpack: (config) => {
-    config.resolve.fallback = { fs: false };
-    return config;
-  },
+  const nextConfig = {
+  turbopack: {},
 };
 
 export default nextConfig;
