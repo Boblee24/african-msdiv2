@@ -98,16 +98,18 @@ export default function DataIngestionPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
+              aria-pressed={tab === t.key}
               style={{
                 flex: 1, padding: "10px 14px", borderRadius: "7px", border: "none",
                 cursor: "pointer", textAlign: "left", transition: "all 0.15s",
-                background: tab === t.key ? "var(--ocean-surface)" : "transparent",
+                background: tab === t.key ? "linear-gradient(135deg, rgba(14,165,233,0.24), rgba(22,45,82,0.95))" : "transparent",
+                boxShadow: tab === t.key ? "inset 0 0 0 1px rgba(125,211,252,0.4), 0 6px 18px rgba(2,132,199,0.18)" : "inset 0 0 0 1px transparent",
               }}
             >
-              <div style={{ fontSize: "13px", fontWeight: 600, color: tab === t.key ? "var(--text-primary)" : "var(--text-muted)" }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: tab === t.key ? "#f8fafc" : "var(--text-muted)" }}>
                 {t.icon} {t.label}
               </div>
-              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>{t.sub}</div>
+              <div style={{ fontSize: "11px", color: tab === t.key ? "rgba(226,232,240,0.82)" : "var(--text-muted)", marginTop: "2px" }}>{t.sub}</div>
             </button>
           ))}
         </div>
