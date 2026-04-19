@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${crimsonPro.variable} ${dmSans.variable} ${jetBrainsMono.variable} bg-ocean-deepest text-text-primary font-body`}>
-        <div className="block md:hidden fixed inset-0 bg-ocean-deepest text-text-primary flex items-center justify-center p-4 z-50">
+        <div className="block md:hidden fixed inset-0 bg-ocean-deepest text-text-primary items-center justify-center p-4 z-50">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Desktop Only</h1>
             <p>This application is optimized for desktop viewing. Please access it from a desktop or laptop computer.</p>

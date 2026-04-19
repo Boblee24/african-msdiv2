@@ -170,6 +170,7 @@ html, body {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.95);
   box-shadow: 0 5px 0 rgba(148, 163, 184, 0.95), 0 -5px 0 rgba(148, 163, 184, 0.95);
+}
   /* ── Custom zoom panel ───────────────────────────────────────────────────── */
 .msdi-zoom-panel {
   display: flex;
@@ -226,7 +227,6 @@ html, body {
 .msdi-zoom-grip:active {
   cursor: grabbing;
   transform: none;
-}
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
