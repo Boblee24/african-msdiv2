@@ -111,10 +111,123 @@ html, body {
   z-index: 900; /* above tiles, below app overlays */
   top: 70px;
   right: 12px;
-  cursor: grab;
   touch-action: none;
 }
-.leaflet-zoom-draggable:active { cursor: grabbing; }
+.msdi-zoom-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(6, 13, 26, 0.92);
+  border: 1px solid rgba(14, 165, 233, 0.24);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+}
+.msdi-zoom-button,
+.msdi-zoom-drag-handle {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(15, 32, 64, 0.96), rgba(10, 22, 40, 0.96));
+  color: #e2e8f0;
+  display: grid;
+  place-items: center;
+  transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.msdi-zoom-button {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.msdi-zoom-button:hover,
+.msdi-zoom-drag-handle:hover {
+  background: linear-gradient(180deg, rgba(22, 45, 82, 0.98), rgba(15, 32, 64, 0.98));
+  border-color: rgba(14, 165, 233, 0.45);
+}
+.msdi-zoom-button:active,
+.msdi-zoom-drag-handle:active {
+  transform: translateY(1px);
+}
+.msdi-zoom-button:focus-visible,
+.msdi-zoom-drag-handle:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.9);
+  outline-offset: 2px;
+}
+.msdi-zoom-drag-handle {
+  cursor: grab;
+}
+.msdi-zoom-drag-handle:active {
+  cursor: grabbing;
+}
+.msdi-zoom-drag-handle span {
+  display: block;
+  width: 14px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.95);
+  box-shadow: 0 5px 0 rgba(148, 163, 184, 0.95), 0 -5px 0 rgba(148, 163, 184, 0.95);
+  /* ── Custom zoom panel ───────────────────────────────────────────────────── */
+.msdi-zoom-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: rgba(6, 13, 26, 0.92);
+  border: 1px solid rgba(14, 165, 233, 0.24);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+.msdi-zoom-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(14, 165, 233, 0.18);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(15, 32, 64, 0.96), rgba(10, 22, 40, 0.96));
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 80ms ease;
+}
+
+.msdi-zoom-btn:hover {
+  background: linear-gradient(180deg, rgba(22, 45, 82, 0.98), rgba(15, 32, 64, 0.98));
+  border-color: rgba(14, 165, 233, 0.5);
+  color: #e2e8f0;
+}
+
+.msdi-zoom-btn:active {
+  transform: scale(0.93);
+}
+
+.msdi-zoom-btn:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.9);
+  outline-offset: 2px;
+}
+
+.msdi-zoom-grip {
+  cursor: grab;
+  color: #475569;
+  border-style: dashed;
+}
+
+.msdi-zoom-grip:hover {
+  color: #94a3b8;
+  border-style: dashed;
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+.msdi-zoom-grip:active {
+  cursor: grabbing;
+  transform: none;
+}
+}
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar          { width: 4px; height: 4px; }

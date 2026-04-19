@@ -19,8 +19,8 @@ const NODE_COLOURS: Record<string, string> = {
 };
 const CSB_COLOURS: Record<string, string> = {
   validated: "#fb923c",
-  flagged:   "#94a3b8",
-  rejected:  "#6b7280",
+  flagged: "#94a3b8",
+  rejected: "#6b7280",
 };
 
 function svgMarker(color: string, size: number, ring: boolean): string {
@@ -33,59 +33,89 @@ function svgMarker(color: string, size: number, ring: boolean): string {
 }
 
 export default function MapClient({ datasets, submissions, onPointClick, adminView, mapTheme }: MapProps) {
-  const containerRef   = useRef<HTMLDivElement>(null);
-  const leafletRef     = useRef<import("leaflet").Map | null>(null);
-  const tileLayerRef   = useRef<import("leaflet").TileLayer | null>(null);
-  // Prevents double-init from React StrictMode running effects twice
+  const containerRef = useRef<HTMLDivElement>(null);
+  const leafletRef = useRef<import("leaflet").Map | null>(null);
+  const tileLayerRef = useRef<import("leaflet").TileLayer | null>(null);
   const initializedRef = useRef(false);
-  const zoomHostRef    = useRef<HTMLDivElement | null>(null);
+  const zoomHostRef = useRef<HTMLDivElement | null>(null);
 
-  // ── Initial map creation (runs once) ──────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || initializedRef.current) return;
     initializedRef.current = true;
 
-    let mounted = true; // guard against async import resolving after unmount
+    let mounted = true;
     let cleanupZoomDrag: (() => void) | null = null;
 
     import("leaflet").then((L) => {
       if (!mounted || !containerRef.current || leafletRef.current) return;
 
-      // Draggable host for zoom control (so it can be moved anywhere).
       const zoomHost = document.createElement("div");
       zoomHost.className = "leaflet-zoom-draggable";
+
+      const dragHandle = document.createElement("button");
+      dragHandle.type = "button";
+      dragHandle.className = "msdi-zoom-drag-handle";
+      dragHandle.setAttribute("aria-label", "Drag zoom controls");
+      dragHandle.setAttribute("title", "Drag zoom controls");
+      dragHandle.innerHTML = '<span class="msdi-zoom-drag-icon" aria-hidden="true"></span>';
+
       containerRef.current.appendChild(zoomHost);
       zoomHostRef.current = zoomHost;
 
-      // Patch default icon paths (webpack asset issue)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl:       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
       });
 
       const map = L.map(containerRef.current, {
-        center:           [2, 22],
-        zoom:             4,
-        zoomControl:      false,
+        center: [2, 22],
+        zoom: 4,
+        zoomControl: false,
         attributionControl: true,
-        minZoom:          2,
-        maxZoom:          17,
+        minZoom: 2,
+        maxZoom: 17,
       });
 
-      const zoom = L.control.zoom({ position: "topleft" });
-      zoom.addTo(map);
-      const zoomEl = zoom.getContainer();
-      if (zoomEl) {
-        // Detach from Leaflet corner container and mount in our draggable host.
-        zoomHost.appendChild(zoomEl);
-        cleanupZoomDrag = makeDraggable(zoomHost, "african_msdi_zoom_control_pos");
-      }
+      // Build fully custom 3-button zoom panel
+const zoomPanel = document.createElement("div");
+zoomPanel.className = "msdi-zoom-panel";
+
+const btnIn = document.createElement("button");
+btnIn.type = "button";
+btnIn.className = "msdi-zoom-btn";
+btnIn.setAttribute("aria-label", "Zoom in");
+btnIn.setAttribute("title", "Zoom in");
+btnIn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+btnIn.addEventListener("click", (e) => { e.stopPropagation(); map.zoomIn(); });
+
+const btnDrag = document.createElement("button");
+btnDrag.type = "button";
+btnDrag.className = "msdi-zoom-btn msdi-zoom-grip";
+btnDrag.setAttribute("aria-label", "Drag to move zoom control");
+btnDrag.setAttribute("title", "Drag zoom controls");
+btnDrag.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="7" r="1.5"/><circle cx="15" cy="7" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="17" r="1.5"/><circle cx="15" cy="17" r="1.5"/></svg>`;
+
+const btnOut = document.createElement("button");
+btnOut.type = "button";
+btnOut.className = "msdi-zoom-btn";
+btnOut.setAttribute("aria-label", "Zoom out");
+btnOut.setAttribute("title", "Zoom out");
+btnOut.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+btnOut.addEventListener("click", (e) => { e.stopPropagation(); map.zoomOut(); });
+
+zoomPanel.appendChild(btnIn);
+zoomPanel.appendChild(btnDrag);
+zoomPanel.appendChild(btnOut);
+zoomHost.appendChild(zoomPanel);
+
+L.DomEvent.disableClickPropagation(zoomHost);
+L.DomEvent.disableScrollPropagation(zoomHost);
+cleanupZoomDrag = makeDraggable(zoomHost, btnDrag, "african_msdi_zoom_control_pos");
 
       setBaseLayer(L, map, mapTheme, tileLayerRef, containerRef);
-
       leafletRef.current = map;
     });
 
@@ -94,14 +124,17 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
       initializedRef.current = false;
       cleanupZoomDrag?.();
       cleanupZoomDrag = null;
+
       if (zoomHostRef.current) {
         zoomHostRef.current.remove();
         zoomHostRef.current = null;
       }
+
       if (leafletRef.current) {
         leafletRef.current.remove();
         leafletRef.current = null;
       }
+
       tileLayerRef.current = null;
     };
   }, []);
@@ -116,7 +149,6 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
     });
   }, [mapTheme]);
 
-  // ── Re-render markers whenever data or view mode changes ──────────────────
   useEffect(() => {
     const map = leafletRef.current;
     if (!map) return;
@@ -124,27 +156,21 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
     import("leaflet").then((L) => {
       if (!leafletRef.current) return;
 
-      // Remove all existing marker layers
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker) map.removeLayer(layer);
       });
 
-      // DATA DECIMATION:
-      // Public  → every 3rd point, depth to 1 d.p., coordinates to 2 d.p.
-      // Military → all points, depth to 3 d.p., coordinates to 5 d.p.
-      const pointsToShow = adminView
-        ? datasets
-        : datasets.filter((_, i) => i % 3 === 0);
+      const pointsToShow = adminView ? datasets : datasets.filter((_, i) => i % 3 === 0);
 
       pointsToShow.forEach((point) => {
         const color = NODE_COLOURS[point.node_code] ?? "#94a3b8";
-        const size  = adminView ? 12 : 9;
-        const icon  = L.divIcon({
-          html:       svgMarker(color, size, adminView),
-          className:  "",
-          iconSize:   [size * 3, size * 3],
+        const size = adminView ? 12 : 9;
+        const icon = L.divIcon({
+          html: svgMarker(color, size, adminView),
+          className: "",
+          iconSize: [size * 3, size * 3],
           iconAnchor: [size * 1.5, size * 1.5],
-          popupAnchor:[0, -(size * 1.5)],
+          popupAnchor: [0, -(size * 1.5)],
         });
         const marker = L.marker([Number(point.lat), Number(point.lon)], { icon });
         marker.bindPopup(officialPopup(point, adminView), { maxWidth: 300 });
@@ -155,12 +181,12 @@ export default function MapClient({ datasets, submissions, onPointClick, adminVi
       submissions.forEach((sub) => {
         if (sub.validation_status === "rejected") return;
         const color = CSB_COLOURS[sub.validation_status] ?? "#94a3b8";
-        const icon  = L.divIcon({
-          html:       svgMarker(color, 7, false),
-          className:  "",
-          iconSize:   [21, 21],
+        const icon = L.divIcon({
+          html: svgMarker(color, 7, false),
+          className: "",
+          iconSize: [21, 21],
           iconAnchor: [10, 10],
-          popupAnchor:[0, -10],
+          popupAnchor: [0, -10],
         });
         const marker = L.marker([Number(sub.lat), Number(sub.lon)], { icon });
         marker.bindPopup(csbPopup(sub), { maxWidth: 280 });
@@ -198,13 +224,12 @@ function setBaseLayer(
   containerRef.current?.style.setProperty("--map-bg", theme.background);
 }
 
-function makeDraggable(el: HTMLDivElement, storageKey: string) {
+function makeDraggable(el: HTMLDivElement, handle: HTMLElement, storageKey: string) {
   const existing = safeParsePos(localStorage.getItem(storageKey));
   if (existing) {
     el.style.left = `${existing.x}px`;
     el.style.top = `${existing.y}px`;
   } else {
-    // Default: top-right-ish without overlapping the title card.
     el.style.left = "unset";
     el.style.right = "12px";
     el.style.top = "70px";
@@ -217,16 +242,14 @@ function makeDraggable(el: HTMLDivElement, storageKey: string) {
   let startTop = 0;
 
   const onPointerDown = (e: PointerEvent) => {
-    // Only allow drag via right mouse button? No — keep simple: any pointer.
     dragging = true;
-    el.setPointerCapture(e.pointerId);
+    handle.setPointerCapture(e.pointerId);
     const rect = el.getBoundingClientRect();
     startX = e.clientX;
     startY = e.clientY;
     startLeft = rect.left;
     startTop = rect.top;
 
-    // Convert from right/top to explicit left/top for dragging.
     el.style.right = "unset";
     el.style.left = `${startLeft}px`;
     el.style.top = `${startTop}px`;
@@ -249,6 +272,7 @@ function makeDraggable(el: HTMLDivElement, storageKey: string) {
   const onPointerUp = (e: PointerEvent) => {
     if (!dragging) return;
     dragging = false;
+
     try {
       const x = Math.round(parseFloat(el.style.left || "0"));
       const y = Math.round(parseFloat(el.style.top || "0"));
@@ -256,16 +280,17 @@ function makeDraggable(el: HTMLDivElement, storageKey: string) {
     } catch {
       // ignore
     }
+
     e.stopPropagation();
     e.preventDefault();
   };
 
-  el.addEventListener("pointerdown", onPointerDown, { passive: false });
+  handle.addEventListener("pointerdown", onPointerDown, { passive: false });
   window.addEventListener("pointermove", onPointerMove, { passive: false });
   window.addEventListener("pointerup", onPointerUp, { passive: false });
 
   return () => {
-    el.removeEventListener("pointerdown", onPointerDown);
+    handle.removeEventListener("pointerdown", onPointerDown);
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("pointerup", onPointerUp);
   };
@@ -284,15 +309,11 @@ function safeParsePos(raw: string | null): { x: number; y: number } | null {
   }
 }
 
-// ── Popup HTML helpers (plain strings — Tailwind can't reach these) ──────────
-
 function officialPopup(p: DataPoint, isAdmin: boolean): string {
-  const flags: Record<string, string> = { NG: "🇳🇬", KE: "🇰🇪", ZA: "🇿🇦" };
-  const flag  = flags[p.node_code] ?? "🌍";
+  const flags: Record<string, string> = { NG: "ðŸ‡³ðŸ‡¬", KE: "ðŸ‡°ðŸ‡ª", ZA: "ðŸ‡¿ðŸ‡¦" };
+  const flag = flags[p.node_code] ?? "ðŸŒ";
   const color = NODE_COLOURS[p.node_code] ?? "#94a3b8";
-  const depth = isAdmin
-    ? `${Number(p.depth_m).toFixed(3)} m`
-    : `${Number(p.depth_m).toFixed(1)} m`;
+  const depth = isAdmin ? `${Number(p.depth_m).toFixed(3)} m` : `${Number(p.depth_m).toFixed(1)} m`;
   const coords = isAdmin
     ? `${Number(p.lat).toFixed(5)}, ${Number(p.lon).toFixed(5)}`
     : `${Number(p.lat).toFixed(2)}, ${Number(p.lon).toFixed(2)} (decimated)`;
@@ -306,7 +327,7 @@ function officialPopup(p: DataPoint, isAdmin: boolean): string {
       </div>
     </div>
     <div style="margin-bottom:8px;padding:3px 8px;background:${isAdmin ? "rgba(239,68,68,0.12)" : "rgba(148,163,184,0.08)"};border:1px solid ${isAdmin ? "rgba(239,68,68,0.35)" : "rgba(148,163,184,0.2)"};border-radius:4px;font-size:10px;font-family:'JetBrains Mono',monospace;color:${isAdmin ? "#f87171" : "#94a3b8"}">
-      ${isAdmin ? "🪖 MILITARY VIEW · FULL RESOLUTION" : "🌐 PUBLIC VIEW · DECIMATED DATA"}
+      ${isAdmin ? "ðŸª– MILITARY VIEW Â· FULL RESOLUTION" : "ðŸŒ PUBLIC VIEW Â· DECIMATED DATA"}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px">
       <tr><td style="color:#94a3b8;padding:2px 0">Custodian</td><td style="color:#e2e8f0;text-align:right;padding-left:8px">${p.custodian}</td></tr>
@@ -315,7 +336,7 @@ function officialPopup(p: DataPoint, isAdmin: boolean): string {
       <tr><td style="color:#94a3b8;padding:2px 0">Coords</td><td style="color:${isAdmin ? "#7dd3fc" : "#475569"};text-align:right;padding-left:8px;font-family:'JetBrains Mono',monospace;font-size:11px">${coords}</td></tr>
     </table>
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:#94a3b8">
-      ${isAdmin ? "🔓 Air-gapped Sovereign Cloud · Full resolution" : "🔒 Toggle Military View for full data"}
+      ${isAdmin ? "ðŸ” Air-gapped Sovereign Cloud Â· Full resolution" : "ðŸ”’ Toggle Military View for full data"}
     </div>
   </div>`;
 }
@@ -323,16 +344,17 @@ function officialPopup(p: DataPoint, isAdmin: boolean): string {
 function csbPopup(sub: CsbSubmission): string {
   const cfg: Record<string, { label: string; c: string; bg: string }> = {
     validated: { label: "VALIDATED", c: "#fb923c", bg: "rgba(251,146,60,0.15)" },
-    flagged:   { label: "FLAGGED",   c: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
-    rejected:  { label: "REJECTED",  c: "#6b7280", bg: "rgba(107,114,128,0.15)" },
+    flagged: { label: "FLAGGED", c: "#94a3b8", bg: "rgba(148,163,184,0.15)" },
+    rejected: { label: "REJECTED", c: "#6b7280", bg: "rgba(107,114,128,0.15)" },
   };
+
   const s = cfg[sub.validation_status] ?? cfg.flagged;
   return `<div style="font-family:'DM Sans',sans-serif;font-size:13px">
     <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1)">
-      <span style="font-size:18px">🛳</span>
+      <span style="font-size:18px">ðŸ›³</span>
       <div>
         <div style="font-weight:600;color:#e2e8f0">VOO Edge-Node Data</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#fb923c">CSB-${sub.id} · ${sub.vessel_id}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#fb923c">CSB-${sub.id} Â· ${sub.vessel_id}</div>
       </div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:12px">
