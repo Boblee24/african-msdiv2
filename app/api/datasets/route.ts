@@ -31,12 +31,25 @@ export async function GET(request: Request) {
       datasets = await sql`SELECT * FROM datasets ORDER BY node_country, id`;
     }
 
-    // Also return CSB submissions
+    // Keep marker payload bounded, but return full-table CSB counts for stats.
     const submissions = await sql`
       SELECT * FROM csb_submissions ORDER BY created_at DESC LIMIT 100
     `;
 
-    return NextResponse.json({ datasets, submissions });
+    const csbStatsRows = await sql`
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE validation_status = 'validated')::int AS validated,
+        COUNT(*) FILTER (WHERE validation_status = 'flagged')::int AS flagged,
+        COUNT(*) FILTER (WHERE validation_status = 'rejected')::int AS rejected
+      FROM csb_submissions
+    `;
+
+    return NextResponse.json({
+      datasets,
+      submissions,
+      csbStats: csbStatsRows[0] ?? { total: 0, validated: 0, flagged: 0, rejected: 0 },
+    });
   } catch (error) {
     console.error("GET /api/datasets error:", error);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

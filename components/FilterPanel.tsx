@@ -7,7 +7,7 @@ type Filters = { country: string; confidence: string; source: string };
 type Props = {
   filters: Filters;
   onChange: (f: Filters) => void;
-  stats: { nigeria: number; kenya: number; sa: number; csb: number };
+  stats: { nigeria: number; kenya: number; sa: number; csb: number; csbFlagged: number };
   adminView: boolean;
   onAdminToggle: () => void;
   mapTheme: MapThemeId;
@@ -77,7 +77,7 @@ export default function FilterPanel({
           <LegendDot color="#f87171" label="South Africa / SANHO" count={stats.sa} />
           <div className="h-px bg-[rgba(14,165,233,0.15)] my-1" />
           <LegendDot color="#fb923c" label="VOO - Validated" count={stats.csb} small />
-          <LegendDot color="#94a3b8" label="VOO - Flagged" count={null} small />
+          <LegendDot color="#94a3b8" label="VOO - Flagged" count={stats.csbFlagged} small />
         </div>
       </Accordion>
 
@@ -183,10 +183,10 @@ function LegendDot({ color, label, count, small }: { color: string; label: strin
     <div className="flex items-center gap-2">
       <span className={`rounded-full shrink-0 ${small ? "w-2 h-2" : "w-2.5 h-2.5"}`}
         style={{ background: color, boxShadow: `0 0 5px ${color}66` }} />
-      <span className="text-[12px] text-text-secondary flex-1">{label}</span>
+      <span className="text-[12px] font-medium text-slate-100 flex-1">{label}</span>
       {count !== null && (
-        <span className="text-[10px] font-mono text-text-muted px-1 rounded"
-          style={{ background: "rgba(255,255,255,0.05)" }}>{count}</span>
+        <span className="text-[10px] font-mono font-semibold text-slate-100 px-1.5 py-0.5 rounded"
+          style={{ background: "rgba(15,23,42,0.78)", border: "1px solid rgba(148,163,184,0.28)" }}>{count}</span>
       )}
     </div>
   );
