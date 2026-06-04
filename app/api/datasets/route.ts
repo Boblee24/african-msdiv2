@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
     // Keep marker payload bounded, but return full-table CSB counts for stats.
     const submissions = await sql`
-      SELECT * FROM csb_submissions ORDER BY created_at DESC LIMIT 100
+      SELECT * FROM csb_submissions ORDER BY created_at DESC LIMIT 150
     `;
 
     const csbStatsRows = await sql`

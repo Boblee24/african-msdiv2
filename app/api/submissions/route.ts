@@ -96,7 +96,7 @@ export async function GET() {
   try {
     await initDb();
     const submissions = await sql`
-      SELECT * FROM csb_submissions ORDER BY created_at DESC LIMIT 100
+      SELECT * FROM csb_submissions ORDER BY created_at DESC LIMIT 200
     `;
     const csbStatsRows = await sql`
       SELECT
