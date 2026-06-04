@@ -19,6 +19,9 @@ const VESSEL_IDS = [
   "FERRY-LAGOS-BADAGRY-06", "TUG-PORT-HARCOURT-01",
 ];
 
+const AUTO_PING_INTERVAL_MS = 4000;
+const AUTO_PING_DURATION_MS = 15000;
+
 function randBetween(min: number, max: number, decimals = 6) {
   return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
 }
@@ -129,15 +132,32 @@ function VooTab() {
   const [pinging, setPinging] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idRef = useRef(1);
+
+  function clearAutoTimers() {
+    if (autoRef.current) {
+      clearInterval(autoRef.current);
+      autoRef.current = null;
+    }
+    if (autoStopRef.current) {
+      clearTimeout(autoStopRef.current);
+      autoStopRef.current = null;
+    }
+  }
 
   useEffect(() => {
     if (autoMode) {
-      autoRef.current = setInterval(() => { firePing(); }, 4000);
+      firePing();
+      autoRef.current = setInterval(() => { firePing(); }, AUTO_PING_INTERVAL_MS);
+      autoStopRef.current = setTimeout(() => {
+        clearAutoTimers();
+        setAutoMode(false);
+      }, AUTO_PING_DURATION_MS);
     } else {
-      if (autoRef.current) clearInterval(autoRef.current);
+      clearAutoTimers();
     }
-    return () => { if (autoRef.current) clearInterval(autoRef.current); };
+    return clearAutoTimers;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMode]);
 

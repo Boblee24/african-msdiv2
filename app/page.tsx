@@ -20,11 +20,13 @@ const MapClient = dynamic(() => import("@/components/MapClient"), {
 
 type Filters  = { country: string; confidence: string; source: string };
 type Selected = { type: "dataset" | "csb"; item: DataPoint | CsbSubmission } | null;
+type CsbStats = { total: number; validated: number; flagged: number; rejected: number };
 
 export default function DiscoveryPortal() {
   const { mapTheme, setMapTheme } = useMapTheme();
   const [all,       setAll]       = useState<DataPoint[]>([]);
   const [subs,      setSubs]      = useState<CsbSubmission[]>([]);
+  const [csbStats,  setCsbStats]  = useState<CsbStats>({ total: 0, validated: 0, flagged: 0, rejected: 0 });
   const [filtered,  setFiltered]  = useState<DataPoint[]>([]);
   const [filters,   setFilters]   = useState<Filters>({ country: "all", confidence: "all", source: "all" });
   const [selected,  setSelected]  = useState<Selected>(null);
@@ -34,7 +36,12 @@ export default function DiscoveryPortal() {
   useEffect(() => {
     fetch("/api/datasets")
       .then((r) => r.json())
-      .then((d) => { setAll(d.datasets ?? []); setSubs(d.submissions ?? []); setFiltered(d.datasets ?? []); })
+      .then((d) => {
+        setAll(d.datasets ?? []);
+        setSubs(d.submissions ?? []);
+        setCsbStats(d.csbStats ?? { total: 0, validated: 0, flagged: 0, rejected: 0 });
+        setFiltered(d.datasets ?? []);
+      })
       .catch(() => setError("Cannot connect to database. Add DATABASE_URL to .env.local then run: npm run seed"));
   }, []);
 
@@ -52,7 +59,8 @@ export default function DiscoveryPortal() {
     nigeria: all.filter((d) => d.node_code === "NG").length,
     kenya:   all.filter((d) => d.node_code === "KE").length,
     sa:      all.filter((d) => d.node_code === "ZA").length,
-    csb:     subs.filter((s) => s.validation_status === "validated").length,
+    csb:     csbStats.validated,
+    csbFlagged: csbStats.flagged,
   };
 
   return (
