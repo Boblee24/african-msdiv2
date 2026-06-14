@@ -42,6 +42,14 @@ export async function initDb() {
       created_at        TIMESTAMP DEFAULT NOW()
     )
   `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS visits (
+      id         SERIAL PRIMARY KEY,
+      path       TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
